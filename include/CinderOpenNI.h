@@ -38,10 +38,10 @@ namespace cinder {
         };
 
 
-        class ImageSourceDepth : public ci::ImageSource
+        class ImageSourceRawDepth : public ci::ImageSource
         {
         public:
-            ImageSourceDepth( _openni::DepthPixel *buffer, int width, int height )
+            ImageSourceRawDepth( _openni::DepthPixel *buffer, int width, int height )
             : ci::ImageSource(), mData( buffer ), _width(width), _height(height)
             {
                 setSize( _width, _height );
@@ -50,7 +50,7 @@ namespace cinder {
                 setDataType( ci::ImageIo::UINT16 );
             }
 
-            ~ImageSourceDepth()
+            ~ImageSourceRawDepth()
             {
             }
 
@@ -67,6 +67,34 @@ namespace cinder {
             _openni::DepthPixel			*mData;
         };
 
+        class ImageSourceDepth : public ci::ImageSource
+        {
+        public:
+            ImageSourceDepth( uint8 *buffer, int width, int height )
+            : ci::ImageSource(), mData( buffer ), _width(width), _height(height)
+            {
+                setSize( _width, _height );
+                setColorModel( ci::ImageIo::CM_GRAY );
+                setChannelOrder( ci::ImageIo::Y );
+                setDataType( ci::ImageIo::UINT8 );
+            }
+
+            ~ImageSourceDepth()
+            {
+            }
+
+            virtual void load( ci::ImageTargetRef target )
+            {
+                ci::ImageSource::RowFunc func = setupRowFunc( target );
+
+                for( uint32_t row = 0; row < _height; ++row )
+                    ((*this).*func)( target, row, mData + row * _width );
+            }
+
+        protected:
+            uint32_t					_width, _height;
+            uint8                       *mData;
+        };
     }
 }
 

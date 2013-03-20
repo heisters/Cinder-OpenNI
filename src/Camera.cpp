@@ -2,7 +2,6 @@
 #include "cinder/app/AppBasic.h"
 
 
-
 namespace cinder { namespace openni {
     void handleStatus(_openni::Status &status, std::string message)
     {
@@ -39,8 +38,8 @@ namespace cinder { namespace openni {
 
     Camera::~Camera()
     {
-        close();
-        shutdown();
+//        close();
+//        shutdown();
 
         if ( allStreams != NULL ) {
             delete []allStreams;
@@ -67,11 +66,11 @@ namespace cinder { namespace openni {
         }
 
 
-        _openni::VideoMode mode = depthStream.getVideoMode();
+        _openni::VideoMode mode = stream.getVideoMode();
         Vec2i size = Vec2i( mode.getResolutionX(), mode.getResolutionY() );
 
         int index = all.size();
-        all.push_back( Frame( stream, size ) );
+        all.push_back( FrameData( stream, size ) );
         allStreams[index] = &stream;
 
         return index;
@@ -94,6 +93,7 @@ namespace cinder { namespace openni {
 
         if ( (enableSensors & SENSOR_DEPTH) == SENSOR_DEPTH ) {
             depthIndex = setupStream( depthStream, _openni::SENSOR_DEPTH );
+            scaledDepthFrameData = DerivedFrameData( &getFrameData(depthIndex) );
         }
 
         if ( (enableSensors & SENSOR_COLOR) == SENSOR_COLOR ) {
@@ -121,10 +121,16 @@ namespace cinder { namespace openni {
 
     void Camera::updateStream( int streamIndex )
     {
-        Frame &frame = getFrame( streamIndex );
+        FrameData &frame = getFrameData( streamIndex );
         frame.stream.readFrame( &frame.frameRef );
         frame.isImageFresh = false;
         frame.isTexFresh = false;
+
+        // FIXME: not so nice :(
+        if ( streamIndex == depthIndex ) {
+            scaledDepthFrameData.isImageFresh = false;
+            scaledDepthFrameData.isTexFresh = false;
+        }
     }
 
     void Camera::close()
@@ -132,67 +138,137 @@ namespace cinder { namespace openni {
         for ( auto &f : all ) {
             f.stream.stop();
             f.stream.destroy();
-            device.close();
         }
+        device.close();
     }
 
     ImageSourceRef Camera::getDepthImage()
     {
-        Frame &frame = getFrame( depthIndex );
-        frame.updateImage< _openni::DepthPixel *, ImageSourceDepth >();
+        scaledDepthFrameData.updateImage< uint8, ImageSourceDepth, _openni::DepthPixel, ImageSourceRawDepth >();
+        return scaledDepthFrameData.image;
+    }
+
+    ImageSourceRef Camera::getRawDepthImage()
+    {
+        FrameData &frame = getFrameData( depthIndex );
+        frame.updateImage< _openni::DepthPixel, ImageSourceRawDepth >();
         return frame.imageRef;
     }
 
     ImageSourceRef Camera::getColorImage()
     {
-        Frame &frame = getFrame( colorIndex );
-        frame.updateImage< _openni::RGB888Pixel *, ImageSourceColor >();
+        FrameData &frame = getFrameData( colorIndex );
+        frame.updateImage< _openni::RGB888Pixel, ImageSourceColor >();
         return frame.imageRef;
     }
 
     gl::Texture & Camera::getDepthTex()
     {
-        Frame &frame = getFrame( depthIndex );
-        frame.updateTex< _openni::DepthPixel *, ImageSourceDepth >();
+        scaledDepthFrameData.updateTex< uint8, ImageSourceDepth, _openni::DepthPixel, ImageSourceRawDepth >();
+        return scaledDepthFrameData.tex;
+    }
+
+    gl::Texture & Camera::getRawDepthTex()
+    {
+        FrameData &frame = getFrameData( depthIndex );
+        frame.updateTex< _openni::DepthPixel, ImageSourceRawDepth >();
         return frame.tex;
     }
 
     gl::Texture & Camera::getColorTex()
     {
-        Frame &frame = getFrame( colorIndex );
-        frame.updateTex< _openni::RGB888Pixel *, ImageSourceColor >();
+        FrameData &frame = getFrameData( colorIndex );
+        frame.updateTex< _openni::RGB888Pixel, ImageSourceColor >();
         return frame.tex;
     }
 
-    Camera::Frame & Camera::getFrame( int index )
+    Camera::FrameData & Camera::getFrameData( int index )
     {
         return all.at( index );
     }
 
-    Camera::Frame::Frame( _openni::VideoStream &stream, Vec2i size ) :
-    stream(stream), size(size), isImageFresh(false), isTexFresh(false),
-    imageRef(Surface8u(size.x, size.y, false))
+    Camera::FrameDataAbstract::FrameDataAbstract( Vec2i size ) :
+    isImageFresh(false), isTexFresh(false)
     {
+    }
 
+    Camera::FrameData::FrameData( _openni::VideoStream &stream, Vec2i size ) :
+    stream(stream),
+    FrameDataAbstract( size ),
+    imageRef(Surface8u(size.x, size.y, false))
+//    scaledData(new uint8[size.x * size.y]),
+//    minPixelValue(stream.getMinPixelValue()),
+//    maxPixelValue(stream.getMaxPixelValue())
+    {
     }
 
     template < typename pixel_t, typename image_t >
-    void Camera::Frame::updateImage()
+    void Camera::FrameData::updateImage()
     {
         if ( isImageFresh || !frameRef.isValid() ) return;
 
-        pixel_t data = (pixel_t)frameRef.getData();
+        pixel_t *data = (pixel_t *)frameRef.getData();
         imageRef = ImageSourceRef( new image_t( data, size.x, size.y ) );
         isImageFresh = true;
     }
 
     template < typename pixel_t, typename image_t >
-    void Camera::Frame::updateTex()
+    void Camera::FrameData::updateTex()
     {
         if ( isTexFresh ) return;
 
         updateImage< pixel_t, image_t >();
         tex = gl::Texture( imageRef );
         isTexFresh = true;
+    }
+
+    Camera::DerivedFrameData::DerivedFrameData() :
+    original(NULL),
+    FrameDataAbstract( Vec2i::zero() )
+    {
+    }
+
+    Camera::DerivedFrameData::DerivedFrameData( FrameData *original ) :
+    original(original),
+    FrameDataAbstract( original->size ),
+    image(size.x, size.y, false)
+    {
+    }
+
+    template < typename pixel_t, typename image_t, typename original_pixel_t, typename original_image_t >
+    void Camera::DerivedFrameData::updateImage()
+    {
+        if ( isImageFresh ) return;
+
+        original->updateImage< original_pixel_t, original_image_t >();
+
+        SurfaceT< original_pixel_t > originalImage(original->imageRef, SurfaceConstraintsDefault(), boost::tribool::false_value);
+        convertData( originalImage, image );
+        isImageFresh = true;
+    }
+
+    template < typename pixel_t, typename image_t, typename original_pixel_t, typename original_image_t >
+    void Camera::DerivedFrameData::updateTex()
+    {
+        if ( isTexFresh ) return;
+
+        updateImage< pixel_t, image_t, original_pixel_t, original_image_t >();
+        tex = gl::Texture( image );
+        isTexFresh = true;
+    }
+
+    void Camera::DerivedFrameData::convertData( SurfaceT< _openni::DepthPixel > &originalImage, Surface8u &convertedImage )
+    {
+        int size = original->size.x * original->size.y;
+        float scale = (255.0 / (float)original->stream.getMaxPixelValue());
+
+        Surface8u::Iter it = convertedImage.getIter();
+        while ( it.line() ) {
+            while ( it.pixel() ) {
+                ColorT< _openni::DepthPixel >color = originalImage.getPixel( it.getPos() );
+                Color8u convertedPixel( color.r * scale, color.g * scale, color.b * scale );
+                convertedImage.setPixel( it.getPos(), convertedPixel );
+            }
+        }
     }
 } }
