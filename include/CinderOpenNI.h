@@ -1,12 +1,11 @@
 #pragma once
 
+#include "cinder/ImageIo.h"
+#include "OpenNI.h"
+
 namespace cinder {
     namespace openni {
-        namespace primesense {
-#include "OpenNI.h"
-        }
-        namespace _openni = primesense::openni;
-
+        namespace _openni = ::openni;
 
         class ImageSourceColor : public ci::ImageSource
         {
@@ -70,7 +69,7 @@ namespace cinder {
         class ImageSourceDepth : public ci::ImageSource
         {
         public:
-            ImageSourceDepth( uint8 *buffer, int width, int height )
+            ImageSourceDepth( uint8_t *buffer, int width, int height )
             : ci::ImageSource(), mData( buffer ), _width(width), _height(height)
             {
                 setSize( _width, _height );
@@ -93,11 +92,8 @@ namespace cinder {
 
         protected:
             uint32_t					_width, _height;
-            uint8                       *mData;
+            uint8_t                     *mData;
         };
     }
 }
-
-
-#include "cinder/Cinder.h"
 #include "CinderOpenNI/Camera.h"

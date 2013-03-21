@@ -16,7 +16,7 @@ public:
 	void draw();
     void shutdown();
 private:
-    openni::Camera camera;
+    ci::openni::Camera camera;
 };
 
 void SimpleViewerApp::prepareSettings(Settings *settings)
@@ -27,7 +27,7 @@ void SimpleViewerApp::prepareSettings(Settings *settings)
 
 void SimpleViewerApp::setup()
 {
-    camera.setup( openni::Camera::SENSOR_DEPTH | openni::Camera::SENSOR_COLOR );
+    camera.setup( ci::openni::Camera::SENSOR_DEPTH | ci::openni::Camera::SENSOR_COLOR );
 }
 
 void SimpleViewerApp::mouseDown( MouseEvent event )
@@ -46,7 +46,7 @@ void SimpleViewerApp::draw()
 
 
 //    gl::draw( camera.getDepthTex(), Rectf( 0, 0, 640, 480 ) );
-    gl::draw( camera.getRawDepthTex(), Rectf( 0, 0, 640, 480 ) );
+//    gl::draw( camera.getRawDepthTex(), Rectf( 0, 0, 640, 480 ) );
     gl::draw( camera.getColorTex(), Rectf( 640, 0, 1280, 480 ) );
 
 }

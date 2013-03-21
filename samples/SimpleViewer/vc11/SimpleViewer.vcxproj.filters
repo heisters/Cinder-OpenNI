@@ -1,3 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
@@ -12,6 +13,21 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
+    <Filter Include="Blocks">
+      <UniqueIdentifier>{ab616c8c-6442-4e43-8e4d-878d72974660}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Blocks\OpenNI">
+      <UniqueIdentifier>{3167949c-0a2e-4fd8-981c-e941bf759fd8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Blocks\OpenNI\src">
+      <UniqueIdentifier>{d4f10613-fcb2-4be1-8ffb-05b5d1116b0a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Blocks\OpenNI\include">
+      <UniqueIdentifier>{291b814b-89be-41e8-9cdd-52215b9c32ab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Blocks\OpenNI\include\CinderOpenNI">
+      <UniqueIdentifier>{1fea402f-893f-4c57-a6fe-9164e456b44d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\SimpleViewerApp.cpp">
@@ -23,10 +39,19 @@
     <ClInclude Include="..\include\Resources.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\..\src\Camera.cpp">
+      <Filter>Blocks\OpenNI\src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Resources.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\CinderOpenNI.h">
+      <Filter>Blocks\OpenNI\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\CinderOpenNI\Camera.h">
+      <Filter>Blocks\OpenNI\include\CinderOpenNI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,4 +1,5 @@
 #include "CinderOpenNI.h"
+#include "CinderOpenNI/Camera.h"
 #include "cinder/app/AppBasic.h"
 
 
@@ -144,7 +145,7 @@ namespace cinder { namespace openni {
 
     ImageSourceRef Camera::getDepthImage()
     {
-        scaledDepthFrameData.updateImage< uint8, ImageSourceDepth, _openni::DepthPixel, ImageSourceRawDepth >();
+        scaledDepthFrameData.updateImage< uint8_t, ImageSourceDepth, _openni::DepthPixel, ImageSourceRawDepth >();
         return scaledDepthFrameData.image;
     }
 
@@ -164,7 +165,7 @@ namespace cinder { namespace openni {
 
     gl::Texture & Camera::getDepthTex()
     {
-        scaledDepthFrameData.updateTex< uint8, ImageSourceDepth, _openni::DepthPixel, ImageSourceRawDepth >();
+        scaledDepthFrameData.updateTex< uint8_t, ImageSourceDepth, _openni::DepthPixel, ImageSourceRawDepth >();
         return scaledDepthFrameData.tex;
     }
 
@@ -196,7 +197,7 @@ namespace cinder { namespace openni {
     stream(stream),
     FrameDataAbstract( size ),
     imageRef(Surface8u(size.x, size.y, false))
-//    scaledData(new uint8[size.x * size.y]),
+//    scaledData(new uint8_t[size.x * size.y]),
 //    minPixelValue(stream.getMinPixelValue()),
 //    maxPixelValue(stream.getMaxPixelValue())
     {
