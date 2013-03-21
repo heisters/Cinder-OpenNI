@@ -10,7 +10,7 @@ namespace cinder { namespace openni {
 
         app::console() << message << ": " << _openni::OpenNI::getExtendedError() << std::endl;
         Camera::shutdown();
-        throw 1;
+		throw Camera::CameraException();
     }
 
 
@@ -39,9 +39,6 @@ namespace cinder { namespace openni {
 
     Camera::~Camera()
     {
-//        close();
-//        shutdown();
-
         if ( allStreams != NULL ) {
             delete []allStreams;
         }
@@ -63,7 +60,7 @@ namespace cinder { namespace openni {
 
         if ( !stream.isValid() ) {
             app::console() << description << " is not valid.";
-            throw 1;
+            throw Camera::CameraException();
         }
 
 
@@ -103,7 +100,7 @@ namespace cinder { namespace openni {
 
         if ( !depthStream.isValid() && !colorStream.isValid() ) {
             app::console() << "No valid OpenNI streams." << std::endl;
-            throw 1;
+            throw Camera::CameraException();
         }
     }
 
@@ -189,7 +186,8 @@ namespace cinder { namespace openni {
     }
 
     Camera::FrameDataAbstract::FrameDataAbstract( Vec2i size ) :
-    isImageFresh(false), isTexFresh(false)
+    isImageFresh( false ), isTexFresh( false ),
+	size( size )
     {
     }
 
@@ -197,9 +195,6 @@ namespace cinder { namespace openni {
     stream(stream),
     FrameDataAbstract( size ),
     imageRef(Surface8u(size.x, size.y, false))
-//    scaledData(new uint8_t[size.x * size.y]),
-//    minPixelValue(stream.getMinPixelValue()),
-//    maxPixelValue(stream.getMaxPixelValue())
     {
     }
 

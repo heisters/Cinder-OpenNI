@@ -30,6 +30,9 @@ namespace cinder {
                 SENSOR_DEPTH = 0x1,
                 SENSOR_COLOR = 0x2
             };
+
+			class CameraException : public std::exception {
+			};
         private:
 
             _openni::Device device;
