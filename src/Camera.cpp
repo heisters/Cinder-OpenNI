@@ -91,7 +91,6 @@ namespace cinder { namespace openni {
 
         if ( (enableSensors & SENSOR_DEPTH) == SENSOR_DEPTH ) {
             depthIndex = setupStream( depthStream, _openni::SENSOR_DEPTH );
-            scaledDepthFrameData = DerivedFrameData( &getFrameData(depthIndex) );
         }
 
         if ( (enableSensors & SENSOR_COLOR) == SENSOR_COLOR ) {
@@ -142,8 +141,9 @@ namespace cinder { namespace openni {
 
     ImageSourceRef Camera::getDepthImage()
     {
+        scaledDepthFrameData.updateOriginal( &getFrameData(depthIndex) );
         scaledDepthFrameData.updateImage< uint8_t, ImageSourceDepth, _openni::DepthPixel, ImageSourceRawDepth >();
-        return scaledDepthFrameData.image;
+        return scaledDepthFrameData.imageRef;
     }
 
     ImageSourceRef Camera::getRawDepthImage()
@@ -162,6 +162,7 @@ namespace cinder { namespace openni {
 
     gl::Texture & Camera::getDepthTex()
     {
+        scaledDepthFrameData.updateOriginal( &getFrameData(depthIndex) );
         scaledDepthFrameData.updateTex< uint8_t, ImageSourceDepth, _openni::DepthPixel, ImageSourceRawDepth >();
         return scaledDepthFrameData.tex;
     }
@@ -185,12 +186,18 @@ namespace cinder { namespace openni {
         return all.at( index );
     }
 
+    /**************************************************************************
+     * FrameDataAbstract
+     */
     Camera::FrameDataAbstract::FrameDataAbstract( Vec2i size ) :
     isImageFresh( false ), isTexFresh( false ),
 	size( size )
     {
     }
 
+    /**************************************************************************
+     * FrameData
+     */
     Camera::FrameData::FrameData( _openni::VideoStream &stream, Vec2i size ) :
     stream(stream),
     FrameDataAbstract( size ),
@@ -218,28 +225,37 @@ namespace cinder { namespace openni {
         isTexFresh = true;
     }
 
+	/**************************************************************************
+     * DerivedFrameData
+     */
     Camera::DerivedFrameData::DerivedFrameData() :
-    original(NULL),
-    FrameDataAbstract( Vec2i::zero() )
+    original( NULL ),
+    FrameDataAbstract( Vec2i::zero() ),
+    imageRef(Surface8u( size.x, size.y, false )),
+    convertedData( NULL )
     {
     }
 
-    Camera::DerivedFrameData::DerivedFrameData( FrameData *original ) :
-    original(original),
-    FrameDataAbstract( original->size ),
-    image(size.x, size.y, false)
+    Camera::DerivedFrameData::~DerivedFrameData()
     {
+        if ( convertedData != NULL ) delete []convertedData;
+    }
+
+    void Camera::DerivedFrameData::updateOriginal( FrameData *_original )
+    {
+        original = _original;
+        size = original->size;
     }
 
     template < typename pixel_t, typename image_t, typename original_pixel_t, typename original_image_t >
     void Camera::DerivedFrameData::updateImage()
     {
-        if ( isImageFresh ) return;
+        if ( isImageFresh || original == NULL || !original->frameRef.isValid() ) return;
 
-        original->updateImage< original_pixel_t, original_image_t >();
+        original_pixel_t *originalData = (original_pixel_t *)original->frameRef.getData();
+        convertData( originalData, &convertedData );
+        imageRef = ImageSourceRef( new image_t( convertedData, size.x, size.y ) );
 
-        SurfaceT< original_pixel_t > originalImage(original->imageRef, SurfaceConstraintsDefault(), boost::tribool::false_value);
-        convertData( originalImage, image );
         isImageFresh = true;
     }
 
@@ -249,22 +265,19 @@ namespace cinder { namespace openni {
         if ( isTexFresh ) return;
 
         updateImage< pixel_t, image_t, original_pixel_t, original_image_t >();
-        tex = gl::Texture( image );
+        tex = gl::Texture( imageRef );
         isTexFresh = true;
     }
 
-    void Camera::DerivedFrameData::convertData( SurfaceT< _openni::DepthPixel > &originalImage, Surface8u &convertedImage )
+    void Camera::DerivedFrameData::convertData( const _openni::DepthPixel *originalData, uint8_t **_convertedData )
     {
-        int size = original->size.x * original->size.y;
+        int _size = size.x * size.y;
         float scale = (255.0 / (float)original->stream.getMaxPixelValue());
+        if ( *_convertedData == NULL ) *_convertedData = new uint8_t[_size];
 
-        Surface8u::Iter it = convertedImage.getIter();
-        while ( it.line() ) {
-            while ( it.pixel() ) {
-                ColorT< _openni::DepthPixel >color = originalImage.getPixel( it.getPos() );
-                Color8u convertedPixel( color.r * scale, color.g * scale, color.b * scale );
-                convertedImage.setPixel( it.getPos(), convertedPixel );
-            }
+        for ( int i = 0; i < _size; ++i ) {
+            (*_convertedData)[i] = (uint8_t)(originalData[i] * scale);
         }
     }
+
 } }

@@ -65,17 +65,18 @@ namespace cinder {
             class DerivedFrameData : public FrameDataAbstract {
             public:
                 DerivedFrameData();
-                DerivedFrameData( FrameData *original );
+                ~DerivedFrameData();
+                ImageSourceRef imageRef;
 
-                Surface8u image;
-
+                void updateOriginal( FrameData *_original );
                 template < typename pixel_t, typename image_t, typename original_pixel_t, typename original_image_t >
                 void updateImage();
                 template < typename pixel_t, typename image_t, typename original_pixel_t, typename original_image_t >
                 void updateTex();
             private:
-                void convertData( SurfaceT< _openni::DepthPixel > &originalImage, Surface8u &convertedImage );
+                void convertData( const _openni::DepthPixel *originalData, uint8_t **convertedData );
                 FrameData *original;
+                uint8_t *convertedData;
             };
 
             std::vector< FrameData > all;
