@@ -69,9 +69,9 @@ namespace cinder {
                 ImageSourceRef imageRef;
 
                 void updateOriginal( FrameData *_original );
-                template < typename pixel_t, typename image_t, typename original_pixel_t, typename original_image_t >
+                template < typename pixel_t, typename image_t, typename original_pixel_t >
                 void updateImage();
-                template < typename pixel_t, typename image_t, typename original_pixel_t, typename original_image_t >
+                template < typename pixel_t, typename image_t, typename original_pixel_t >
                 void updateTex();
             private:
                 void convertData( const _openni::DepthPixel *originalData, uint8_t **convertedData );

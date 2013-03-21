@@ -139,10 +139,13 @@ namespace cinder { namespace openni {
         device.close();
     }
 
+    /**************************************************************************
+     * getters
+     */
     ImageSourceRef Camera::getDepthImage()
     {
         scaledDepthFrameData.updateOriginal( &getFrameData(depthIndex) );
-        scaledDepthFrameData.updateImage< uint8_t, ImageSourceDepth, _openni::DepthPixel, ImageSourceRawDepth >();
+        scaledDepthFrameData.updateImage< uint8_t, ImageSourceDepth, _openni::DepthPixel >();
         return scaledDepthFrameData.imageRef;
     }
 
@@ -163,7 +166,7 @@ namespace cinder { namespace openni {
     gl::Texture & Camera::getDepthTex()
     {
         scaledDepthFrameData.updateOriginal( &getFrameData(depthIndex) );
-        scaledDepthFrameData.updateTex< uint8_t, ImageSourceDepth, _openni::DepthPixel, ImageSourceRawDepth >();
+        scaledDepthFrameData.updateTex< uint8_t, ImageSourceDepth, _openni::DepthPixel >();
         return scaledDepthFrameData.tex;
     }
 
@@ -247,7 +250,7 @@ namespace cinder { namespace openni {
         size = original->size;
     }
 
-    template < typename pixel_t, typename image_t, typename original_pixel_t, typename original_image_t >
+    template < typename pixel_t, typename image_t, typename original_pixel_t >
     void Camera::DerivedFrameData::updateImage()
     {
         if ( isImageFresh || original == NULL || !original->frameRef.isValid() ) return;
@@ -259,12 +262,12 @@ namespace cinder { namespace openni {
         isImageFresh = true;
     }
 
-    template < typename pixel_t, typename image_t, typename original_pixel_t, typename original_image_t >
+    template < typename pixel_t, typename image_t, typename original_pixel_t >
     void Camera::DerivedFrameData::updateTex()
     {
         if ( isTexFresh ) return;
 
-        updateImage< pixel_t, image_t, original_pixel_t, original_image_t >();
+        updateImage< pixel_t, image_t, original_pixel_t >();
         tex = gl::Texture( imageRef );
         isTexFresh = true;
     }
