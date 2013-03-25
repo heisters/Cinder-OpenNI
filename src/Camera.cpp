@@ -198,9 +198,9 @@ namespace cinder { namespace openni {
     {
     }
 
-    void Camera::FrameDataAbstract::initTexture()
+    void Camera::FrameDataAbstract::initTexture( Vec2i _size )
     {
-        imageRef = ImageSourceRef( Surface8u(size.x, size.y, false) );
+        imageRef = ImageSourceRef( Surface8u(_size.x, _size.y, false) );
         tex = gl::Texture( imageRef );
     }
 
@@ -211,7 +211,7 @@ namespace cinder { namespace openni {
     stream(stream),
     FrameDataAbstract( size )
     {
-        initTexture();
+        initTexture(size);
     }
 
     template < typename pixel_t, typename image_t >
@@ -251,12 +251,11 @@ namespace cinder { namespace openni {
 
     void Camera::DerivedFrameData::updateOriginal( FrameData *_original )
     {
-        size = original->size;
-
         if ( original == NULL ) {
-            initTexture();
+            initTexture( _original->size );
         }
 
+        size = _original->size;
         original = _original;
     }
 

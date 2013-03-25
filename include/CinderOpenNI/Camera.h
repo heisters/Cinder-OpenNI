@@ -47,7 +47,7 @@ namespace cinder {
                 gl::Texture tex;
                 ImageSourceRef imageRef;
                 bool isImageFresh, isTexFresh;
-                void initTexture();
+                void initTexture( Vec2i size );
             };
 
             class FrameData : public FrameDataAbstract {
