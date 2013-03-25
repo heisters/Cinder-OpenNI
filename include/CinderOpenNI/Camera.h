@@ -45,7 +45,9 @@ namespace cinder {
 
                 Vec2i size;
                 gl::Texture tex;
+                ImageSourceRef imageRef;
                 bool isImageFresh, isTexFresh;
+                void initTexture();
             };
 
             class FrameData : public FrameDataAbstract {
@@ -54,7 +56,6 @@ namespace cinder {
 
                 _openni::VideoStream &stream;
                 _openni::VideoFrameRef frameRef;
-                ImageSourceRef imageRef;
 
                 template < typename pixel_t, typename image_t >
                 void updateImage();
@@ -66,7 +67,6 @@ namespace cinder {
             public:
                 DerivedFrameData();
                 ~DerivedFrameData();
-                ImageSourceRef imageRef;
 
                 void updateOriginal( FrameData *_original );
                 template < typename pixel_t, typename image_t, typename original_pixel_t >

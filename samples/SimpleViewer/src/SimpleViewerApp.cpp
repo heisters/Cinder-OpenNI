@@ -47,7 +47,7 @@ void SimpleViewerApp::draw()
 
     gl::draw( camera.getDepthTex(), Rectf( 0, 0, 640, 480 ) );
 //    gl::draw( camera.getRawDepthTex(), Rectf( 0, 0, 640, 480 ) );
-    gl::draw( camera.getColorTex(), Rectf( 640, 0, 1280, 480 ) );
+//    gl::draw( camera.getColorTex(), Rectf( 640, 0, 1280, 480 ) );
 
 }
 
